@@ -1,0 +1,150 @@
+// Prisma schema for Estate Plus CRM
+// SQLite for dev/prototype — swap datasource to PostgreSQL for production
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Property ────────────────────────────────────────────────────────
+
+model Property {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String   // residential | commercial | rental | resale | plot
+  subtype     String   // villa | apartment | office | warehouse | land | penthouse | studio | shop | farmhouse
+  status      String   @default("available") // available | hold | sold | rented | booked
+
+  price     Float
+  area      Float    // sq ft
+  bedrooms  Int?
+  bathrooms Int?
+
+  address String
+  city    String
+  state   String
+  pincode String?
+
+  // Owner info (denormalized for quick access)
+  ownerName  String?
+  ownerPhone String?
+  ownerEmail String?
+  ownerId    String?
+  owner      Owner?   @relation(fields: [ownerId], references: [id])
+
+  images    PropertyImage[]
+  documents PropertyDocument[]
+  priceHistory PriceHistory[]
+  timeline     TimelineEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([city])
+  @@index([price])
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  url        String
+  caption    String?
+  order      Int      @default(0)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
+
+model PropertyDocument {
+  id         String   @id @default(cuid())
+  name       String
+  url        String
+  type       String   // agreement | title_deed | tax_receipt | floor_plan | brochure | other
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
+
+model PriceHistory {
+  id         String   @id @default(cuid())
+  price      Float
+  date       DateTime
+  note       String?
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model TimelineEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  type        String   // created | status_change | price_change | document_added | note | visit
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+// ─── Project (Builder/Developer) ─────────────────────────────────────
+
+model Project {
+  id          String  @id @default(cuid())
+  name        String
+  builder     String
+  description String?
+  location    String
+  status      String  @default("active") // active | upcoming | completed
+  totalUnits  Int     @default(0)
+
+  priceSheetUrl String?
+  brochureUrl   String?
+  masterPlanUrl String?
+
+  towers Tower[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tower {
+  id          String @id @default(cuid())
+  name        String
+  totalFloors Int
+  projectId   String
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  units       Unit[]
+}
+
+model Unit {
+  id         String @id @default(cuid())
+  unitNumber String
+  floor      Int
+  type       String  // 1BHK | 2BHK | 3BHK | 4BHK | studio | penthouse | shop | office
+  area       Float
+  price      Float
+  status     String  @default("available") // available | hold | sold | booked
+  bedrooms   Int?
+  bathrooms  Int?
+  towerId    String
+  tower      Tower  @relation(fields: [towerId], references: [id], onDelete: Cascade)
+}
+
+// ─── Owner / Builder ─────────────────────────────────────────────────
+
+model Owner {
+  id         String     @id @default(cuid())
+  name       String
+  email      String?
+  phone      String
+  company    String?
+  type       String     @default("individual") // individual | builder | developer
+  notes      String?
+  properties Property[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
