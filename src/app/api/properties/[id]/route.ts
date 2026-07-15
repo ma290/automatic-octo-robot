@@ -44,12 +44,14 @@ export async function PUT(
       return NextResponse.json({ error: "Property not found" }, { status: 404 });
     }
 
+    const { images, ...propertyData } = data;
+
     const property = await prisma.property.update({
       where: { id },
       data: {
-        ...data,
-        bedrooms: data.bedrooms ?? undefined,
-        bathrooms: data.bathrooms ?? undefined,
+        ...propertyData,
+        bedrooms: propertyData.bedrooms ?? undefined,
+        bathrooms: propertyData.bathrooms ?? undefined,
       },
       include: {
         images: { orderBy: { order: "asc" } },
