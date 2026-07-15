@@ -1,6 +1,6 @@
 # ─── Stage 1: Install dependencies ─────────────────────────────────
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -10,6 +10,7 @@ RUN npm ci && npx prisma generate
 
 # ─── Stage 2: Build the application ───────────────────────────────
 FROM node:20-alpine AS builder
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -31,7 +32,7 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL="file:./data/estate-plus.db"
 
-RUN apk add --no-cache wget
+RUN apk add --no-cache libc6-compat openssl wget
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
