@@ -16,6 +16,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma client and push schema (creates the SQLite DB file)
+ENV DATABASE_URL="file:./data/estate-plus.db"
 RUN npx prisma generate && \
     npx prisma db push && \
     npx tsx prisma/seed.ts && \
