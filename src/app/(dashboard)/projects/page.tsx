@@ -49,6 +49,12 @@ export default function ProjectsPage() {
             {projects.length} developer projects
           </p>
         </div>
+        <Link
+          href="/projects/new"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
+        >
+          <span>Add Project</span>
+        </Link>
       </div>
 
       <div className="relative max-w-md">
