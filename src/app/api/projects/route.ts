@@ -62,7 +62,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = projectCreateSchema.parse(body);
 
-    const project = await prisma.project.create({ data });
+    const { towers, ...projectData } = data;
+
+    const project = await prisma.project.create({ 
+      data: {
+        ...projectData,
+        ...(towers && towers.length > 0 ? {
+          towers: {
+            create: towers.map(t => ({
+              name: t.name,
+              totalFloors: t.totalFloors
+            }))
+          }
+        } : {})
+      } 
+    });
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
     console.error("POST /api/projects error:", error);

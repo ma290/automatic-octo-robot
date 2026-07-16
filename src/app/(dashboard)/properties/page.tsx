@@ -27,6 +27,8 @@ import {
   Download,
   CheckSquare,
   Square,
+  FolderKanban,
+  ChevronRight as ArrowRight,
 } from "lucide-react";
 
 interface Property {
@@ -70,6 +72,10 @@ function PropertiesContent() {
   const [showFilters, setShowFilters] = useState(false);
   const [showBulkMenu, setShowBulkMenu] = useState<string | null>(null);
 
+  // Cross-search state
+  const [crossProjects, setCrossProjects] = useState<any[]>([]);
+  const [crossProjectsLoading, setCrossProjectsLoading] = useState(false);
+
   // Filters
   const [filterType, setFilterType] = useState(searchParams.get("type") || "");
   const [filterStatus, setFilterStatus] = useState(searchParams.get("status") || "");
@@ -109,6 +115,20 @@ function PropertiesContent() {
   useEffect(() => {
     fetchProperties();
   }, [fetchProperties]);
+
+  // Cross-search: fetch projects when user types a query
+  useEffect(() => {
+    if (!debouncedSearch || debouncedSearch.length < 2) {
+      setCrossProjects([]);
+      return;
+    }
+    setCrossProjectsLoading(true);
+    fetch(`/api/projects?search=${encodeURIComponent(debouncedSearch)}`)
+      .then((r) => r.json())
+      .then((data) => setCrossProjects(data.projects || []))
+      .catch(() => setCrossProjects([]))
+      .finally(() => setCrossProjectsLoading(false));
+  }, [debouncedSearch]);
 
   const activeFilterCount = [filterType, filterStatus, filterCity, filterBedrooms, filterMinPrice, filterMaxPrice].filter(Boolean).length;
 
@@ -239,7 +259,7 @@ function PropertiesContent() {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="w-full rounded-lg border bg-[hsl(var(--card))] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               >
                 <option value="">All Types</option>
                 {propertyTypes.map((t) => (
@@ -252,7 +272,7 @@ function PropertiesContent() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="w-full rounded-lg border bg-[hsl(var(--card))] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               >
                 <option value="">All Statuses</option>
                 {propertyStatuses.map((s) => (
@@ -275,7 +295,7 @@ function PropertiesContent() {
               <select
                 value={filterBedrooms}
                 onChange={(e) => setFilterBedrooms(e.target.value)}
-                className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="w-full rounded-lg border bg-[hsl(var(--card))] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               >
                 <option value="">Any</option>
                 {[1, 2, 3, 4, 5].map((b) => (
@@ -308,6 +328,49 @@ function PropertiesContent() {
             <button onClick={clearAllFilters} className="text-xs text-brand-500 hover:text-brand-400 font-medium">
               Clear all filters
             </button>
+          )}
+        </div>
+      )}
+
+      {/* Cross-search: Projects results */}
+      {debouncedSearch.length >= 2 && (crossProjectsLoading || crossProjects.length > 0) && (
+        <div className="rounded-xl border bg-[hsl(var(--card))] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FolderKanban className="w-4 h-4 text-violet-500" />
+              <span className="text-sm font-semibold">Also found in Projects</span>
+              {!crossProjectsLoading && (
+                <span className="px-1.5 py-0.5 rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[11px] font-bold">
+                  {crossProjects.length}
+                </span>
+              )}
+            </div>
+            <Link href={`/projects?search=${encodeURIComponent(debouncedSearch)}`} className="flex items-center gap-1 text-xs text-brand-500 hover:text-brand-400 font-medium transition-colors">
+              View all in Projects <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {crossProjectsLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[...Array(4)].map((_, i) => <div key={i} className="h-14 rounded-lg bg-[hsl(var(--accent))] animate-pulse" />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              {crossProjects.slice(0, 4).map((p: any) => (
+                <Link
+                  key={p.id}
+                  href={`/projects/${p.id}`}
+                  className="flex items-center gap-3 p-3 rounded-lg border hover:bg-[hsl(var(--accent))] transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center flex-shrink-0">
+                    <FolderKanban className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold truncate group-hover:text-brand-500 transition-colors">{p.name}</p>
+                    <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate">{p.location}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           )}
         </div>
       )}

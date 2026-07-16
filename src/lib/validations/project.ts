@@ -9,6 +9,10 @@ export const projectCreateSchema = z.object({
   priceSheetUrl: z.string().optional(),
   brochureUrl: z.string().optional(),
   masterPlanUrl: z.string().optional(),
+  towers: z.array(z.object({
+    name: z.string().min(1, "Tower name is required"),
+    totalFloors: z.number().min(1, "Total floors must be at least 1")
+  })).optional(),
 });
 
 export const projectUpdateSchema = projectCreateSchema.partial();
