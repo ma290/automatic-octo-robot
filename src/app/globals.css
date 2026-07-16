@@ -59,6 +59,8 @@
   --sidebar-accent-foreground: 222 47% 11%;
   --sidebar-border: 214 32% 91%;
   --sidebar-ring: 222 47% 31%;
+
+  color-scheme: light;
 }
 
 .dark {
@@ -96,6 +98,9 @@
   --sidebar-accent-foreground: 210 40% 98%;
   --sidebar-border: 217 19% 18%;
   --sidebar-ring: 210 40% 72%;
+
+  /* Critical: tells the browser to render native form controls (select, scrollbars) in dark mode */
+  color-scheme: dark;
 }
 
 * {
@@ -108,6 +113,36 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Form controls: ensure they always respect the theme ────────────────── */
+
+/* Inputs and textareas */
+input, textarea {
+  background-color: transparent;
+  color: hsl(var(--foreground));
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Select elements — MUST have an explicit background so the native
+   dropdown popup matches the theme. bg-transparent alone breaks dark mode
+   because the OS popup is always rendered with the OS light theme.
+   color-scheme on .dark above handles the popup background in Chromium. */
+select {
+  background-color: hsl(var(--card));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+
+/* When inside a .dark context, also set the option color explicitly
+   for Firefox which ignores color-scheme on the popup */
+.dark select option {
+  background-color: hsl(224 30% 13%);
+  color: hsl(210 40% 98%);
 }
 
 /* Custom scrollbar */
@@ -166,3 +201,33 @@ body {
   0%, 100% { box-shadow: 0 0 0 0 rgb(16 185 129 / 0.4); }
   50% { box-shadow: 0 0 0 6px rgb(16 185 129 / 0); }
 }
+
+/* ── Dark mode: recharts tooltip ──────────────────────────────────────────── */
+/* Recharts renders its tooltip label in black by default; override for dark */
+.dark .recharts-tooltip-label,
+.dark .recharts-tooltip-item {
+  color: hsl(210 40% 90%) !important;
+}
+
+/* ── Dark mode: select focus ring ─────────────────────────────────────────── */
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.25);
+  border-color: hsl(var(--ring));
+}
+
+/* ── Prevent native autofill yellow/blue from breaking dark mode ──────────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: hsl(var(--foreground));
+  -webkit-box-shadow: 0 0 0 1000px hsl(var(--card)) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+

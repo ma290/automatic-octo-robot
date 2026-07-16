@@ -13,9 +13,28 @@ const steps = [
   { id: 5, title: "Owner", description: "Contact details" },
 ];
 
-const propertyTypes = ["residential", "commercial", "rental", "resale", "plot"];
-const propertySubtypes = ["villa", "apartment", "office", "warehouse", "land", "penthouse", "studio", "shop", "farmhouse", "rowhouse"];
-const propertyStatuses = ["available", "hold", "sold", "rented", "booked"];
+const propertyTypes = ["residential", "commercial", "rental", "resale", "plot", "other"];
+
+const ALL_SUBTYPES = ["villa", "apartment", "office", "warehouse", "land", "penthouse", "studio", "shop", "farmhouse", "rowhouse"];
+const ALL_STATUSES = ["available", "hold", "sold", "rented", "booked"];
+
+const TYPE_SUBTYPES: Record<string, string[]> = {
+  residential: ["villa", "apartment", "penthouse", "studio", "rowhouse", "farmhouse"],
+  commercial: ["office", "warehouse", "shop", "land"],
+  rental: ["villa", "apartment", "office", "warehouse", "penthouse", "studio", "shop", "farmhouse", "rowhouse"],
+  resale: ["villa", "apartment", "office", "warehouse", "penthouse", "studio", "shop", "farmhouse", "rowhouse"],
+  plot: ["land"],
+  other: ALL_SUBTYPES,
+};
+
+const TYPE_STATUSES: Record<string, string[]> = {
+  residential: ["available", "hold", "sold", "booked"],
+  commercial: ["available", "hold", "sold", "booked"],
+  rental: ["available", "rented", "hold"],
+  resale: ["available", "sold", "hold"],
+  plot: ["available", "hold", "sold", "booked"],
+  other: ALL_STATUSES,
+};
 
 export default function NewPropertyPage() {
   const router = useRouter();
@@ -25,6 +44,7 @@ export default function NewPropertyPage() {
     title: "",
     description: "",
     type: "residential",
+    customType: "",
     subtype: "apartment",
     status: "available",
     price: "",
@@ -42,7 +62,23 @@ export default function NewPropertyPage() {
   });
 
   const updateField = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [field]: value };
+      
+      if (field === "type") {
+        const validSubtypes = TYPE_SUBTYPES[value as string] || [];
+        const validStatuses = TYPE_STATUSES[value as string] || [];
+        
+        if (!validSubtypes.includes(newData.subtype)) {
+          newData.subtype = validSubtypes[0] || "";
+        }
+        if (!validStatuses.includes(newData.status)) {
+          newData.status = validStatuses[0] || "";
+        }
+      }
+      
+      return newData;
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,11 +109,16 @@ export default function NewPropertyPage() {
   const handleSubmit = async () => {
     setSaving(true);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { customType, ...submitData } = formData;
+      const payloadType = formData.type === "other" && formData.customType ? formData.customType.toLowerCase() : formData.type;
+      
       const res = await fetch("/api/properties", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...formData,
+          ...submitData,
+          type: payloadType,
           price: parseFloat(formData.price) || 0,
           area: parseFloat(formData.area) || 0,
           bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
@@ -97,7 +138,7 @@ export default function NewPropertyPage() {
 
   const canProceed = () => {
     switch (currentStep) {
-      case 1: return formData.title.length >= 3 && formData.type && formData.subtype;
+      case 1: return formData.title.length >= 3 && formData.type && formData.subtype && (formData.type !== "other" || formData.customType.length >= 3);
       case 2: return formData.address.length >= 5 && formData.city.length >= 2 && formData.state.length >= 2;
       case 3: return parseFloat(formData.price) > 0 && parseFloat(formData.area) > 0;
       default: return true;
@@ -164,22 +205,36 @@ export default function NewPropertyPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1.5 block">Type *</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => updateField("type", e.target.value)}
-                  className="w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                >
-                  {propertyTypes.map((t) => <option key={t} value={t}>{capitalize(t)}</option>)}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    value={formData.type}
+                    onChange={(e) => updateField("type", e.target.value)}
+                    className={cn(
+                      "rounded-lg border bg-[hsl(var(--card))] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20",
+                      formData.type === "other" ? "w-1/3" : "w-full"
+                    )}
+                  >
+                    {propertyTypes.map((t) => <option key={t} value={t}>{capitalize(t)}</option>)}
+                  </select>
+                  {formData.type === "other" && (
+                    <input
+                      type="text"
+                      value={formData.customType}
+                      onChange={(e) => updateField("customType", e.target.value)}
+                      placeholder="Specify type..."
+                      className="flex-1 rounded-lg border bg-transparent px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                    />
+                  )}
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1.5 block">Subtype *</label>
                 <select
                   value={formData.subtype}
                   onChange={(e) => updateField("subtype", e.target.value)}
-                  className="w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  className="w-full rounded-lg border bg-[hsl(var(--card))] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
-                  {propertySubtypes.map((t) => <option key={t} value={t}>{capitalize(t)}</option>)}
+                  {(TYPE_SUBTYPES[formData.type] || []).map((t) => <option key={t} value={t}>{capitalize(t)}</option>)}
                 </select>
               </div>
               <div>
@@ -187,9 +242,9 @@ export default function NewPropertyPage() {
                 <select
                   value={formData.status}
                   onChange={(e) => updateField("status", e.target.value)}
-                  className="w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  className="w-full rounded-lg border bg-[hsl(var(--card))] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
-                  {propertyStatuses.map((s) => <option key={s} value={s}>{capitalize(s)}</option>)}
+                  {(TYPE_STATUSES[formData.type] || []).map((s) => <option key={s} value={s}>{capitalize(s)}</option>)}
                 </select>
               </div>
             </div>
@@ -283,7 +338,7 @@ export default function NewPropertyPage() {
                 <select
                   value={formData.bedrooms}
                   onChange={(e) => updateField("bedrooms", e.target.value)}
-                  className="w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  className="w-full rounded-lg border bg-[hsl(var(--card))] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
                   <option value="">N/A</option>
                   {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}
@@ -294,7 +349,7 @@ export default function NewPropertyPage() {
                 <select
                   value={formData.bathrooms}
                   onChange={(e) => updateField("bathrooms", e.target.value)}
-                  className="w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  className="w-full rounded-lg border bg-[hsl(var(--card))] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
                   <option value="">N/A</option>
                   {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}
