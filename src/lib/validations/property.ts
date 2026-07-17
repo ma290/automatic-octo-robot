@@ -10,8 +10,8 @@ export const propertyStatuses = ["available", "hold", "sold", "rented", "booked"
 export const propertyCreateSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().optional(),
-  type: z.enum(propertyTypes),
-  subtype: z.enum(propertySubtypes),
+  type: z.string(),
+  subtype: z.string(),
   status: z.enum(propertyStatuses).default("available"),
   price: z.coerce.number().positive("Price must be positive"),
   area: z.coerce.number().positive("Area must be positive"),
@@ -26,6 +26,22 @@ export const propertyCreateSchema = z.object({
   ownerEmail: z.string().email().optional().or(z.literal("")),
   ownerId: z.string().optional(),
   images: z.array(z.string()).optional(),
+  // New extended fields
+  furnished: z.string().nullable().optional(),
+  kitchen: z.boolean().nullable().optional(),
+  attachedBathrooms: z.coerce.number().int().min(0).nullable().optional(),
+  balconies: z.coerce.number().int().min(0).nullable().optional(),
+  parking: z.coerce.number().int().min(0).nullable().optional(),
+  facing: z.string().nullable().optional(),
+  floor: z.coerce.number().int().min(0).nullable().optional(),
+  totalFloors: z.coerce.number().int().min(0).nullable().optional(),
+  age: z.coerce.number().int().min(0).nullable().optional(),
+  amenities: z.string().nullable().optional(),
+  possessionStatus: z.string().nullable().optional(),
+  availableFrom: z.string().nullable().optional(),
+  isCorner: z.boolean().nullable().optional(),
+  mainRoadFacing: z.boolean().nullable().optional(),
+  boundaryWall: z.boolean().nullable().optional(),
 });
 
 export const propertyUpdateSchema = propertyCreateSchema.partial();

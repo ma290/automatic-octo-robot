@@ -13,6 +13,7 @@ import {
   Filter,
   X,
   Plus,
+  Settings2,
 } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -254,10 +255,9 @@ function ProjectsContent() {
               : 0;
 
             return (
-              <Link
+              <div
                 key={project.id}
-                href={`/projects/${project.id}`}
-                className="group rounded-xl bg-[hsl(var(--card))] border p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                className="group rounded-xl bg-[hsl(var(--card))] border p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center">
@@ -278,7 +278,7 @@ function ProjectsContent() {
                   {project.location}
                 </div>
 
-                <div className="mt-4 pt-4 border-t space-y-2">
+                <div className="mt-4 pt-4 border-t space-y-2 flex-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-[hsl(var(--muted-foreground))]">Availability</span>
                     <span className="font-medium">{project.availableUnits}/{project.totalUnits} units</span>
@@ -291,12 +291,25 @@ function ProjectsContent() {
                   </div>
                   <div className="flex items-center justify-between text-xs text-[hsl(var(--muted-foreground))]">
                     <span>{project._count.towers} tower{project._count.towers !== 1 ? "s" : ""}</span>
-                    <span className="flex items-center gap-1 group-hover:text-brand-500 transition-colors">
-                      View Details <ChevronRight className="w-3 h-3" />
-                    </span>
                   </div>
                 </div>
-              </Link>
+
+                {/* Action buttons */}
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium hover:bg-[hsl(var(--accent))] transition-colors"
+                  >
+                    View Details <ChevronRight className="w-3 h-3" />
+                  </Link>
+                  <Link
+                    href={`/projects/${project.id}/inventory`}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-500 text-white text-xs font-medium hover:bg-brand-600 transition-colors"
+                  >
+                    <Settings2 className="w-3 h-3" /> Manage
+                  </Link>
+                </div>
+              </div>
             );
           })}
         </div>

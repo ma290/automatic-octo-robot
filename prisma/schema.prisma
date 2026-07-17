@@ -1,13 +1,14 @@
 // Prisma schema for Estate Plus CRM
-// SQLite for dev/prototype — swap datasource to PostgreSQL for production
+// PostgreSQL — Neon hosted database
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ─── Property ────────────────────────────────────────────────────────
@@ -29,6 +30,23 @@ model Property {
   city    String
   state   String
   pincode String?
+
+  // Additional Real Estate Fields
+  furnished         String?
+  kitchen           Boolean?
+  attachedBathrooms Int?
+  balconies         Int?
+  parking           Int?
+  facing            String?
+  floor             Int?
+  totalFloors       Int?
+  age               Int?
+  amenities         String?
+  possessionStatus  String?
+  availableFrom     DateTime?
+  isCorner          Boolean?
+  mainRoadFacing    Boolean?
+  boundaryWall      Boolean?
 
   // Owner info (denormalized for quick access)
   ownerName  String?
@@ -132,17 +150,24 @@ model Tower {
 }
 
 model Unit {
-  id         String @id @default(cuid())
-  unitNumber String
-  floor      Int
-  type       String  // 1BHK | 2BHK | 3BHK | 4BHK | studio | penthouse | shop | office
-  area       Float
-  price      Float
-  status     String  @default("available") // available | hold | sold | booked
-  bedrooms   Int?
-  bathrooms  Int?
-  towerId    String
-  tower      Tower  @relation(fields: [towerId], references: [id], onDelete: Cascade)
+  id          String  @id @default(cuid())
+  unitNumber  String
+  floor       Int
+  type        String  // 1BHK | 2BHK | 3BHK | 4BHK | studio | penthouse | shop | office
+  superArea   Float
+  carpetArea  Float?
+  price       Float
+  plc         Float?
+  facing      String?
+  isCorner    Boolean @default(false)
+  status      String  @default("available") // available | hold | sold | booked
+  bedrooms    Int?
+  bathrooms   Int?
+  clientName  String?
+  clientPhone String?
+  notes       String?
+  towerId     String
+  tower       Tower   @relation(fields: [towerId], references: [id], onDelete: Cascade)
 }
 
 // ─── Owner / Builder ─────────────────────────────────────────────────
