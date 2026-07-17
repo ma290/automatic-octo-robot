@@ -608,7 +608,7 @@ function generateUnits(floors: number, unitsPerFloor: number, prefix: string) {
         unitNumber: `${prefix}${floor.toString().padStart(2, "0")}${unit.toString().padStart(2, "0")}`,
         floor,
         type: unitType,
-        area: baseArea + Math.floor(Math.random() * 200),
+        superArea: baseArea + Math.floor(Math.random() * 200),
         price: basePrice + floorPremium + Math.floor(Math.random() * 500000),
         status: statuses[Math.floor(Math.random() * statuses.length)],
         bedrooms,

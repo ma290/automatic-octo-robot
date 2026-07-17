@@ -3,14 +3,16 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { cn, formatPrice, formatArea, capitalize } from "@/lib/utils";
-import { ArrowLeft, Building2, MapPin, Download, Layers } from "lucide-react";
+import { ArrowLeft, Building2, MapPin, Download, Layers, Settings2 } from "lucide-react";
+import Link from "next/link";
 
 interface Unit {
   id: string;
   unitNumber: string;
   floor: number;
   type: string;
-  area: number;
+  superArea: number;
+  carpetArea: number | null;
   price: number;
   status: string;
   bedrooms: number | null;
@@ -75,7 +77,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  if (!project) return null;
+  if (!project || !project.towers || project.towers.length === 0) return (
+    <div className="p-6">
+      <div className="flex items-center gap-4 mb-6">
+        <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors">
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-xl font-bold">Project Details</h1>
+      </div>
+      <div className="text-center py-20 text-[hsl(var(--muted-foreground))]">
+        <p>This project has no towers configured yet, or the project was not found.</p>
+      </div>
+    </div>
+  );
 
   const tower = project.towers[activeTower];
   const maxFloor = tower ? tower.totalFloors : 0;
@@ -116,6 +130,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <span className="hidden sm:inline">Price Sheet</span>
             </button>
           )}
+          <Link href={`/projects/${project.id}/inventory`} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-500 text-white text-sm font-medium hover:bg-brand-600 transition-colors">
+            <Settings2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Manage Inventory</span>
+          </Link>
         </div>
       </div>
 
@@ -208,7 +226,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 {[
                   { label: "Type", value: selectedUnit.type },
                   { label: "Floor", value: `${selectedUnit.floor}` },
-                  { label: "Area", value: formatArea(selectedUnit.area) },
+                  { label: "Area", value: formatArea(selectedUnit.superArea) },
                   { label: "Price", value: formatPrice(selectedUnit.price) },
                   { label: "Status", value: capitalize(selectedUnit.status) },
                   ...(selectedUnit.bedrooms != null ? [{ label: "Bedrooms", value: `${selectedUnit.bedrooms}` }] : []),
